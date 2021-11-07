@@ -1,0 +1,68 @@
+DESIGN.txt
+
+- CORE LANGUAGE - surface language together with desugar for functions if, let, letrec (from homework)
+
+- I will be implementing ER machine, where every rule (transition) will correspond to labeled block written in main function
+
+- REPRESENTATION OF CONTINUATIONS
+
+   - continuations will be represented by global variable pointer to struct mpj_cont
+   - initial state will be halt, which will be represented by nullptr
+   - I will likely split struct mpj_cont to several sub structs based on which members have to be defined
+
+
+struct mpj_cont {
+	mpj_cont prev;   	// previous continuation
+	mpj_env env;     	// environment (if there is not any environment --> nullptr)
+	mpj_value value; 	// always only max 1 value
+	const char* expr;       // index given to expression in racket function (compile expr) written as char*
+ 	mpj_cont_type;          // type of continuation
+	mpj_cont_op_type;	// contains which operator
+}
+
+enum mpj_cont_type {
+	mpj_cont_apl = 0;
+	mpj_cont_apr = 1;
+	mpj_cont_op1 = 2;
+	mpj_cont_op2l = 3;
+	mpj_cont_op2r = 4;
+}
+enum mpj_op_type {
+	mpj_op1_add1 = 0;
+	mpj_op1_sub1 = 1;
+	mpj_op1_fst = 2;
+	mpj_op1_snd = 3;
+	mpj_op2_plus = 4;
+	mpj_op2_multi = 5;
+	mpj_op2_equal = 6;
+	mpj_op2_less = 7;
+	mpj_op2_pair = 8;
+}
+
+Example (apl N env k) -
+	struct mpj_cont {
+		mpj_cont prev = k;   	
+		mpj_env env = env;     	
+		mpj_value value = undefined; 	
+		const char* expr  = N; // where N is index from racket (compile N) written as char*       
+ 		mpj_cont_type type = 0;          
+		mpj_cont_op_type op = undefined;	
+	}
+Example (apr CV k) -
+struct mpj_cont {
+		mpj_cont prev = k;   	
+		mpj_env env = undefined;     	
+		mpj_value value = CV; 	
+		const char* expr  = undefined;       
+ 		mpj_cont_type type = 1;          
+		mpj_cont_op_type op = undefined;	
+	}
+Example (op2l + N env k) -
+struct mpj_cont {
+		mpj_cont prev = k;   	
+		mpj_env env = env;     	
+		mpj_value value = undefined; 	
+		const char* expr  = N;   // where N is index from racket (compile N) written as char*     
+ 		mpj_cont_type type = 3;          
+		mpj_cont_op_type op = 4;	
+	}
