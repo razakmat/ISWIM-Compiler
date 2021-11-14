@@ -100,6 +100,31 @@ void mpj_panic(char *message) {
   exit(2);
 }
 
-/* ============================================================
- * YOUR CODE GOES HERE
- * ============================================================ */
+mpj_cont *mpj_cont_empty() {
+  mpj_cont *cont = GC_MALLOC(sizeof(*cont));
+  cont->label = NULL;
+  cont->env = NULL;
+  cont->value = NULL;
+  cont->prev = NULL;
+  return cont;
+}
+
+mpj_cont * mpj_cont_extend(mpj_cont* prev,mpj_code_addr label,mpj_env* env,mpj_value value){
+  mpj_cont *cont = GC_MALLOC(sizeof(*cont));
+  cont->label = label;
+  cont->env = env;
+  cont->value = value;
+  cont->prev = prev;
+  return cont;
+}
+
+void mpj_cont_change(mpj_cont* cont,void * label,mpj_env* env,mpj_value value){
+  cont->label = label;
+  cont->env = env;
+  cont->value = value;
+}
+
+mpj_cont * mpj_cont_remove(mpj_cont* cont){
+  return cont->prev;
+}
+
