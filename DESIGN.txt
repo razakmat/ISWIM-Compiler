@@ -1,68 +1,129 @@
 DESIGN.txt
 
-- CORE LANGUAGE - surface language together with desugar for functions if, let, letrec (from homework)
+------------------------------------------------------------------------------------------------------
 
-- I will be implementing ER machine, where every rule (transition) will correspond to labeled block written in main function
+- CORE LANGUAGE
+	
+	SM SN SL ::= B X (λ X SM) (SM SN) (Op1 SM) (Op2 SM SN) 
+	             (if SL SM SN) (let ([X SM]) SN) (letrec ([X SM]) SN)
+	B ::= integer
+	X Y Z ::= variable-not-otherwise-mentioned
+	Op1 ::= add1 sub1 fst snd
+	Op2 ::= + * = < pair
+	M N L ::= X (λ X M) B (M N) (Op1 M) (Op2 M N) (if L M N)
+	
+    -desugar function (for let and letrec)
+    	
+    	(define-metafunction ISWIM
+  	desugar : SM -> M
+  	;; The Core expression cases:
+  	[(desugar X) X]
+  	[(desugar (λ X SM)) (λ X (desugar SM))]
+  	[(desugar (SM SN)) ((desugar SM) (desugar SN))]
+  	[(desugar B) B]
+  	[(desugar (Op1 SM)) (Op1 (desugar SM))]
+  	[(desugar (Op2 SM SN)) (Op2 (desugar SM) (desugar SN))]
+  	[(desugar (if SL SM SN)) 
+  		(if (desugar SL) (desugar SM) (desugar SN))]
+  	;; The syntactic sugar cases:
+  	[(desugar (let ([X SM]) SN))
+   		(desugar ((λ X SN) SM))]
+  	[(desugar (letrec ([X SM]) SN))
+   		(desugar ((λ X SN) (,Z-term (λ X SM))))])	
+	(define Z-term
+  		'(λ f (λ x (((λ g (f (λ v ((g g) v)))) (λ g (f (λ v ((g g) v))))) x))))
+  		
+-----------------------------------------------------------------------------------------------------------
 
-- REPRESENTATION OF CONTINUATIONS
+- ER machine configurations
+	- eval(M, env, k)
+		- executation starts at label 'EVAL_<M>'
+			- Its code implements the machine transition starting at this configuration
+		- the environment register 'env' is represented by the local variable 'mpj_env * env'
+		- the continuation 'k' is represented by local variable 'mpj_cont * cont'
+		- the variable 'V' is dead at the beginning of eval configurations
+	- ret(V, k)
+		- value register 'V' is represented by variable 'mpj_value V'
+			- It is live at the beginning of ret configuration
+		- the variable 'env' (representing environment) is dead at the beginning of ret configurations
+		- the variable 'cont' is live and contains current continuation
+		- the execution depends on top frame of the continuation
+			- ret(V,(apl N,env,k'))
+				- the execution starts at the label 'RET_apl_<L>' // L = (M N)
+					- Its code implements the machine transition starting at this configuration
+				- the variable 'cont' contains env and k' as fields
+			- ret(V,(apr (closure X,M,env),k'))
+				- the execution starts at the label 'RET_apr_<L>' // L = (M N)
+					- Its code implements the machine transition starting at this configuration
+				- the variable 'cont' contains value (closure X,M,env) and k' as fields
+			- ret(V,(op1 Op1,k'))
+				- the execution starts at the label 'RET_op1_<L>' // L = (Op1 M)
+					- Its code implements the machine transition starting at this configuration
+				- the variable 'cont' contains k' as fields
+			- ret(V,(op2l Op2,N,env,k'))
+				- the execution starts at the label 'RET_op2l_<L>' // L = (Op2 M N)
+					- Its code implements the machine transition starting at this configuration
+				- the variable 'cont' contains env and k' as fields
+			- ret(V,(op2r Op2,V',k'))
+				- the execution starts at the label 'RET_op2r_<L>' // L = (Op2 M N)
+					- Its code implements the machine transition starting at this configuration
+				- the variable 'cont' contains value V' and k' as fields
+		- added rules for if:
+			- eval〈(if L M N),env,κ 〉→er eval〈L,E,(if M N,env,κ) 〉
+			- ret〈0,(if M N,env,κ) 〉→er eval〈N,E,κ 〉
+			- ret〈V,(if M N,env,κ) 〉→er eval〈M,E,κ 〉    where (V != 0)
+		-the execution for if:
+			- ret(0,(if M N,env,k'))
+				- the execution starts at the label 'RET_if_<L>' // L = (if L M N)
+					- Its code implements the machine transition starting at this configuration
+				- the variable 'cont' contains env and k' as fields
+				- execution for the following expression starts at the label 'EVAL_<N>'
+			- ret(V,(if M N,env,k')) where (V != 0)
+				- the execution starts at the label 'RET_if_<L>' // L = (if L M N)
+					- Its code implements the machine transition starting at this configuration
+				- the variable 'cont' contains env and k' as fields
+				- execution for the following expression starts at the label 'EVAL_<M>'
 
-   - continuations will be represented by global variable pointer to struct mpj_cont
-   - initial state will be halt, which will be represented by nullptr
-   - I will likely split struct mpj_cont to several sub structs based on which members have to be defined
 
+-------------------------------------------------------------------------------------------------------------
 
-struct mpj_cont {
-	mpj_cont prev;   	// previous continuation
-	mpj_env env;     	// environment (if there is not any environment --> nullptr)
-	mpj_value value; 	// always only max 1 value
-	const char* expr;       // index given to expression in racket function (compile expr) written as char*
- 	mpj_cont_type;          // type of continuation
-	mpj_cont_op_type;	// contains which operator
-}
-
-enum mpj_cont_type {
-	mpj_cont_apl = 0;
-	mpj_cont_apr = 1;
-	mpj_cont_op1 = 2;
-	mpj_cont_op2l = 3;
-	mpj_cont_op2r = 4;
-}
-enum mpj_op_type {
-	mpj_op1_add1 = 0;
-	mpj_op1_sub1 = 1;
-	mpj_op1_fst = 2;
-	mpj_op1_snd = 3;
-	mpj_op2_plus = 4;
-	mpj_op2_multi = 5;
-	mpj_op2_equal = 6;
-	mpj_op2_less = 7;
-	mpj_op2_pair = 8;
-}
-
-Example (apl N env k) -
-	struct mpj_cont {
-		mpj_cont prev = k;   	
-		mpj_env env = env;     	
-		mpj_value value = undefined; 	
-		const char* expr  = N; // where N is index from racket (compile N) written as char*       
- 		mpj_cont_type type = 0;          
-		mpj_cont_op_type op = undefined;	
-	}
-Example (apr CV k) -
-struct mpj_cont {
-		mpj_cont prev = k;   	
-		mpj_env env = undefined;     	
-		mpj_value value = CV; 	
-		const char* expr  = undefined;       
- 		mpj_cont_type type = 1;          
-		mpj_cont_op_type op = undefined;	
-	}
-Example (op2l + N env k) -
-struct mpj_cont {
-		mpj_cont prev = k;   	
-		mpj_env env = env;     	
-		mpj_value value = undefined; 	
-		const char* expr  = N;   // where N is index from racket (compile N) written as char*     
- 		mpj_cont_type type = 3;          
-		mpj_cont_op_type op = 4;	
-	}
+- My representation of continuations
+	- stack of continuations is held by local variable (of function main) *cont
+	- halt continuation
+		- continuation with label set to MPJ_K_HALT
+		- other fields of continuation set to NULL (could be undefined)
+	- I have some functions for work with continuations
+		- mpj_cont_extend(mpj_cont*,mpj_code_addr,mpj_env*,mpj_value) 
+			// creates new continuation and puts it on top of the rest continuations
+		- mpj_cont_change(mpj_cont*,mpj_code_addr,mpj_env*,mpj_value)
+			// changes fields in continuation on top
+		- mpj_cont_remove(mpj_cont*)
+			// removes continuation on top
+	
+	struct mpj_cont_frame_st {
+  		mpj_code_addr label; // holds RET_ type of label, so evaluated expression knows where to return
+  		mpj_env * env;       // holds environment or NULL
+  		mpj_value value;     // holds value (integer,pair or closure) or NULL
+  		mpj_cont * prev;     // points to the previous continuation (in case of HALT it holds NULL)
+	};
+	
+- Used labels
+	// M ::= X (λ X M) B (M N) (Op1 M) (Op2 M N) (if L M N)
+	- EVAL_<M> - beginning of evaluation of expression M
+	// L = (Op1 M)
+	- RET_op1_<L> - returns here when M is evaluated
+			- represents transition - ret〈V ,(op1 Op1,κ) 〉→er ret〈W,κ 〉
+	// L = (Op2 M N)
+	- RET_op2l_<L> - returns here when M is evaluated
+			- represents transition - ret〈V ,(op2l Op2,N,E,κ) 〉→er eval〈N,E,(op2r Op2, V ,κ) 〉 
+	- RET_op2r_<L> - returns here when N is evaluated
+			- represents transition - ret〈V2,(op2r Op2, V1,κ) 〉→er ret〈W,κ 〉
+	// L = (M N)
+	- RET_apl_<L> - returns here when M is evaluated
+			- represents transition - ret〈V ,(apl N,E,κ) 〉→er eval〈N,E,(apr V ,κ) 〉
+	- RET_apr_<L> - returns here when N is evaluated
+			- represents transition - ret〈V ,(apr (closure X,M,E),κ) 〉→er eval〈M,E[X 7→ V ],κ 〉
+	// K = (if L M N)
+	- RET_if_<K> - returns here when condition L is evaluated
+			- represents transitions - ret〈0,(if M N,env,κ) 〉→er eval〈N,E,κ 〉
+						  - ret〈V,(if M N,env,κ) 〉→er eval〈M,E,κ 〉    where (V != 0)
