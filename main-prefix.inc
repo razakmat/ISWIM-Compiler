@@ -5,7 +5,10 @@
    */
   mpj_value V = mpj_make_integer(0);
 
-  /* MORE STUFF MIGHT GO HERE */
+  mpj_env * env = NULL;
+  mpj_cont * cont = mpj_cont_empty();
+  mpj_cont_change(cont,&&MPJ_K_HALT,NULL,NULL);
+  mpj_code_addr label_closure;
 
   /* Jump over the following labels to the program START. */
   goto START;
@@ -16,9 +19,16 @@ MPJ_K_HALT:
     case mpj_type_integer:
       printf("%ld\n", mpj_value_as_integer(V));
       exit(0);
+    case mpj_type_closure:
+      printf("function\n");
+      exit(1);
+    case mpj_type_pair:
+      printf("pair\n");
+      exit(1);
     default:
-      mpj_panic("My implementation of the halt continuation is incomplete!");
+      mpj_panic("Program halted with unknown type!");
     }
   }
+
 
   /* MORE STUFF MIGHT GO HERE */
