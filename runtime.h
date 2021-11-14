@@ -89,10 +89,20 @@ void mpj_env_print(mpj_env*);
 noreturn void mpj_panic(char*); /* does not return */
 
 
-/* ============================================================
- * YOUR CODE GOES HERE
- * ============================================================ */
+typedef struct mpj_cont_frame_st mpj_cont;
 
+struct mpj_cont_frame_st {
+  mpj_code_addr label;
+  mpj_env * env;
+  mpj_value value;
+  mpj_cont * prev;
+};
+
+mpj_cont * mpj_cont_empty();
+
+mpj_cont * mpj_cont_extend(mpj_cont*,mpj_code_addr,mpj_env*,mpj_value);
+void mpj_cont_change(mpj_cont*,void *,mpj_env*,mpj_value);
+mpj_cont * mpj_cont_remove(mpj_cont*);
 
 
 #endif
