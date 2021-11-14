@@ -107,7 +107,7 @@
       (printf "  goto EVAL_~a;\n\n" indexM)
       (printf "RET_op1_~a:\n" index)
       (printf "  if (!mpj_value_is_pair(V))\n")
-      (printf "     mpj_panic(\"Operator fst can accept only type pair! Expr: (fst ~a)\");\n" M)
+      (printf "     mpj_panic(\"Operator fst can accept only type pair! Expr: (snd ~a)\");\n" M)
       (printf "  V = (mpj_value_as_pair(V))->cdr;\n")
       (printf "  cont = mpj_cont_remove(cont);\n")
       (printf "  goto *cont->label;\n\n")
