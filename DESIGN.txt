@@ -69,9 +69,9 @@ DESIGN.txt
 					- Its code implements the machine transition starting at this configuration
 				- the variable 'cont' contains value V' and k' as fields
 		- added rules for if:
-			- eval〈(if L M N),env,κ 〉→er eval〈L,E,(if M N,env,κ) 〉
-			- ret〈0,(if M N,env,κ) 〉→er eval〈N,E,κ 〉
-			- ret〈V,(if M N,env,κ) 〉→er eval〈M,E,κ 〉    where (V != 0)
+			- eval〈(if L M N),env,κ 〉→er eval〈L,env,(if M N,env,κ) 〉
+			- ret〈0,(if M N,env,κ) 〉→er eval〈N,env,κ 〉
+			- ret〈V,(if M N,env,κ) 〉→er eval〈M,env,κ 〉    where (V != 0)
 		-the execution for if:
 			- ret(0,(if M N,env,k'))
 				- the execution starts at the label 'RET_if_<L>' // L = (if L M N)
