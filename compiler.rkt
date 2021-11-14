@@ -129,15 +129,15 @@
           (printf "  V = mpj_make_integer(mpj_value_as_integer(V) + mpj_value_as_integer(cont->value));\n")]
         ['*
           (printf "  if (!mpj_value_is_integer(V) || !mpj_value_is_integer(cont->value))\n")
-          (printf "     mpj_panic(\"Operator * can accept only type integer! Expr: (+ ~a ~a)\");\n" M N)
+          (printf "     mpj_panic(\"Operator * can accept only type integer! Expr: (* ~a ~a)\");\n" M N)
           (printf "  V = mpj_make_integer(mpj_value_as_integer(V) * mpj_value_as_integer(cont->value));\n")]
         ['=
           (printf "  if (!mpj_value_is_integer(V) || !mpj_value_is_integer(cont->value))\n")
-          (printf "     mpj_panic(\"Operator + can accept only type integer! Expr: (+ ~a ~a)\");\n" M N)
+          (printf "     mpj_panic(\"Operator + can accept only type integer! Expr: (= ~a ~a)\");\n" M N)
           (printf "  V = mpj_make_integer((long int)(mpj_value_as_integer(V) == mpj_value_as_integer(cont->value)));\n")]
         ['<
           (printf "  if (!mpj_value_is_integer(V) || !mpj_value_is_integer(cont->value))\n")
-          (printf "     mpj_panic(\"Operator + can accept only type integer! Expr: (+ ~a ~a)\");\n" M N)
+          (printf "     mpj_panic(\"Operator + can accept only type integer! Expr: (< ~a ~a)\");\n" M N)
           (printf "  V = mpj_make_integer((long int)(mpj_value_as_integer(cont->value) < mpj_value_as_integer(V)));\n")]
         ['pair
           (printf "  V = mpj_make_pair(cont->value,V);\n")])
