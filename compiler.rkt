@@ -123,24 +123,12 @@
       (printf "  goto EVAL_~a;\n\n" indexN)
       (printf "RET_op2r_~a:\n" index)
       (match Op2
-        ['+ 
-          (printf "  if (!mpj_value_is_integer(V) || !mpj_value_is_integer(cont->value))\n")
-          (printf "     mpj_panic(\"Operator + can accept only type integer! Expr: (+ ~a ~a)\");\n" M N)
-          (printf "  V = mpj_make_integer(mpj_value_as_integer(V) + mpj_value_as_integer(cont->value));\n")]
-        ['*
-          (printf "  if (!mpj_value_is_integer(V) || !mpj_value_is_integer(cont->value))\n")
-          (printf "     mpj_panic(\"Operator * can accept only type integer! Expr: (* ~a ~a)\");\n" M N)
-          (printf "  V = mpj_make_integer(mpj_value_as_integer(V) * mpj_value_as_integer(cont->value));\n")]
-        ['=
-          (printf "  if (!mpj_value_is_integer(V) || !mpj_value_is_integer(cont->value))\n")
-          (printf "     mpj_panic(\"Operator + can accept only type integer! Expr: (= ~a ~a)\");\n" M N)
-          (printf "  V = mpj_make_integer((long int)(mpj_value_as_integer(V) == mpj_value_as_integer(cont->value)));\n")]
-        ['<
-          (printf "  if (!mpj_value_is_integer(V) || !mpj_value_is_integer(cont->value))\n")
-          (printf "     mpj_panic(\"Operator + can accept only type integer! Expr: (< ~a ~a)\");\n" M N)
-          (printf "  V = mpj_make_integer((long int)(mpj_value_as_integer(cont->value) < mpj_value_as_integer(V)));\n")]
         ['pair
-          (printf "  V = mpj_make_pair(cont->value,V);\n")])
+          (printf "  V = mpj_make_pair(cont->value,V);\n")]
+        [_ 
+          (printf "  if (!mpj_value_is_integer(V) || !mpj_value_is_integer(cont->value))\n")
+          (printf "     mpj_panic(\"Operator ~a can accept only type integer! Expr: (~a ~a ~a)\");\n" Op2 Op2 M N)
+          (printf "  V = mpj_make_integer((long int)(mpj_value_as_integer(cont->value) ~a mpj_value_as_integer(V)));\n" Op2)])
       (printf "  cont = mpj_cont_remove(cont);\n")
       (printf "  goto *cont->label;\n\n")
       (printf "\n//------------------------------------------------------------\n"))]
